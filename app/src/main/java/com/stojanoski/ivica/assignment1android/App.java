@@ -9,14 +9,14 @@ import retrofit.RestAdapter;
  */
 public class App extends Application {
 
-    private static final String API_URL = "http://api.openweathermap.org/";
     private OpenWeatherService mOpenWeatherApi;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint(API_URL).build();
+        RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint(OpenWeatherService.API_URL)
+                .build();
         mOpenWeatherApi = restAdapter.create(OpenWeatherService.class);
     }
 

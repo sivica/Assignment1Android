@@ -1,7 +1,9 @@
 package com.stojanoski.ivica.assignment1android;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -41,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, CityInfoActivity.class));
+                startActivity(new Intent(MainActivity.this, AddCitiesActivity.class));
             }
         });
 
@@ -62,10 +64,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void getGroupWeather() {
         mOpenWeatherApi = mApp.getOpenWeatherApi();
-        String ids = "524901,703448,2643743";
-        String units = "metric";
-        String appid = "2de143494c0b295cca9337e1e96b00e0";
-        mOpenWeatherApi.groupWeatherByIds(ids, units, appid, new Callback<GroupWeather>() {
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String ids = prefs.getString("city_ids", "");
+
+        mOpenWeatherApi.groupWeatherByIds(ids, OpenWeatherService.UNITS,
+                OpenWeatherService.APPID, new Callback<GroupWeather>() {
             @Override
             public void success(GroupWeather groupWeather, Response response) {
                 Log.d(TAG, groupWeather.toString());
