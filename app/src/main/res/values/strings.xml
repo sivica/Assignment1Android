@@ -4,4 +4,9 @@
     <string name="no_cities_added">No cities added</string>
     <string name="title_activity_add_cities">AddCitiesActivity</string>
     <string name="city">City</string>
+    <string name="title_activity_city_info">CityInfoActivity</string>
+    <string name="city_name_label">City Name:</string>
+    <string name="temperature_label">Temperature:</string>
+    <string name="humidity_label">Humidity:</string>
+    <string name="description_label">Description:</string>
 </resources>

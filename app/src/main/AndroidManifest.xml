@@ -27,6 +27,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.stojanoski.ivica.assignment1android.MainActivity" />
         </activity>
+        <activity
+            android:name=".CityInfoActivity"
+            android:label="@string/title_activity_city_info"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.stojanoski.ivica.assignment1android.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
