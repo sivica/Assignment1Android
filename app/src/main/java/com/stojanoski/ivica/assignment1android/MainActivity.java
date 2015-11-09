@@ -3,11 +3,11 @@ package com.stojanoski.ivica.assignment1android;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,12 +15,20 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
+
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = MainActivity.class.getSimpleName();
     private RecyclerView mCitiesRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
     private TextView mEmptyView;
     private ArrayList<String> mCities;
+    private OpenWeatherService mOpenWeatherApi;
+    private App mApp;
+    private CityAdapter mCityAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,24 +42,53 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(MainActivity.this, CityInfoActivity.class));
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
             }
         });
 
+        mApp = ((App)getApplication());
         mCitiesRecyclerView = (RecyclerView) findViewById(R.id.cities_recycler_view);
+        mEmptyView = (TextView) findViewById(R.id.empty_view);
 
         mLayoutManager = new LinearLayoutManager(this);
         mCitiesRecyclerView.setLayoutManager(mLayoutManager);
 
-        mEmptyView = (TextView) findViewById(R.id.empty_view);
-        mCities = new ArrayList<>();
+    }
 
-        checkIfEmpty();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getGroupWeather();
+    }
+
+    private void getGroupWeather() {
+        mOpenWeatherApi = mApp.getOpenWeatherApi();
+        String ids = "524901,703448,2643743";
+        String units = "metric";
+        String appid = "2de143494c0b295cca9337e1e96b00e0";
+        mOpenWeatherApi.groupWeatherByIds(ids, units, appid, new Callback<GroupWeather>() {
+            @Override
+            public void success(GroupWeather groupWeather, Response response) {
+                Log.d(TAG, groupWeather.toString());
+
+                mCityAdapter = new CityAdapter(mApp.getApplicationContext(), groupWeather.getList());
+                mCitiesRecyclerView.setAdapter(mCityAdapter);
+                checkIfEmpty();
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(TAG, error.getMessage());
+
+                mCityAdapter = new CityAdapter(mApp.getApplicationContext(),
+                        new ArrayList<GroupWeather.CityWeather>());
+                mCitiesRecyclerView.setAdapter(mCityAdapter);
+                checkIfEmpty();
+            }
+        });
     }
 
     private void checkIfEmpty() {
-        if (mCities.size() == 0) {
+        if (mCityAdapter.getItemCount() == 0) {
             mCitiesRecyclerView.setVisibility(View.GONE);
             mEmptyView.setVisibility(View.VISIBLE);
         } else {
