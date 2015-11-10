@@ -1,12 +1,15 @@
 package com.stojanoski.ivica.assignment1android;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.InputMismatchException;
 import java.util.List;
 
 /**
@@ -16,9 +19,11 @@ public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final LayoutInflater mInflater;
     private List<GroupWeather.CityWeather> mItems;
+    private Context mContext;
 
     public CityAdapter(Context context, List<GroupWeather.CityWeather> items) {
         mInflater = LayoutInflater.from(context);
+        mContext = context;
         mItems = items;
     }
 
@@ -29,9 +34,18 @@ public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        GroupWeather.CityWeather item = getItem(position);
+        final GroupWeather.CityWeather item = getItem(position);
         ((CityHolder)holder).mCityName.setText(item.getName());
         ((CityHolder)holder).mTemperature.setText(item.getTemp());
+
+        ((CityHolder)holder).itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mContext, CityInfoActivity.class);
+                intent.putExtra(CityInfoActivity.EXTRA_INFO, item.getName());
+                mContext.startActivity(intent);
+            }
+        });
     }
 
     private GroupWeather.CityWeather getItem(int position) {

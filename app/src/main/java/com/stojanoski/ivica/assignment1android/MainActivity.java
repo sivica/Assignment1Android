@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             public void success(GroupWeather groupWeather, Response response) {
                 Log.d(TAG, groupWeather.toString());
 
-                mCityAdapter = new CityAdapter(mApp.getApplicationContext(), groupWeather.getList());
+                mCityAdapter = new CityAdapter(MainActivity.this, groupWeather.getList());
                 mCitiesRecyclerView.setAdapter(mCityAdapter);
                 checkIfEmpty();
             }
