@@ -62,6 +62,11 @@ public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
 
+    public void remove(int position) {
+        mItems.remove(position);
+        notifyItemRemoved(position);
+    }
+
     class CityHolder extends RecyclerView.ViewHolder {
         public TextView mCityName;
         public TextView mTemperature;
