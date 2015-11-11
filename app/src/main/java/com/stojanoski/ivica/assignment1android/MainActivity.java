@@ -115,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void success(GroupWeather groupWeather, Response response) {
                         mCityAdapter.addItems(groupWeather.getList());
+                        checkIfEmpty();
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
 
