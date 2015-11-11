@@ -12,13 +12,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import retrofit.Callback;
@@ -27,15 +25,9 @@ import retrofit.client.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
     private RecyclerView mCitiesRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
     private TextView mEmptyView;
-    private ArrayList<String> mCities;
-    private OpenWeatherService mOpenWeatherApi;
     private App mApp;
-    private SharedPreferences mPrefs;
-    private Set<String> mIds;
     private CityAdapter mCityAdapter;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
@@ -69,13 +61,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mApp = ((App)getApplication());
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         mCitiesRecyclerView = (RecyclerView) findViewById(R.id.cities_recycler_view);
         mEmptyView = (TextView) findViewById(R.id.empty_view);
 
-        mLayoutManager = new LinearLayoutManager(this);
-        mCitiesRecyclerView.setLayoutManager(mLayoutManager);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        mCitiesRecyclerView.setLayoutManager(layoutManager);
 
         mCityAdapter = new CityAdapter(MainActivity.this);
         mCitiesRecyclerView.setAdapter(mCityAdapter);
@@ -99,18 +90,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void refreshCities() {
-        mIds = mPrefs.getStringSet("cityIds", null);
-        if (mIds == null) {
-            checkIfEmpty();
-            return;
-        }
-        mOpenWeatherApi = mApp.getOpenWeatherApi();
-        String commaSeparatedIds = "";
-        for (String id : mIds) {
-            commaSeparatedIds += id + ",";
-        }
+        OpenWeatherService openWeatherApi = mApp.getOpenWeatherApi();
+        String commaSeparatedIds = CityManager.getCommaSeparatedIds(this);
 
-        mOpenWeatherApi.groupWeatherByIds(commaSeparatedIds, OpenWeatherService.UNITS,
+        openWeatherApi.groupWeatherByIds(commaSeparatedIds, OpenWeatherService.UNITS,
                 OpenWeatherService.APPID, new Callback<GroupWeather>() {
                     @Override
                     public void success(GroupWeather groupWeather, Response response) {
@@ -159,8 +142,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDismissed(Snackbar snackbar, int event) {
                 super.onDismissed(snackbar, event);
-                mIds.remove(id);
-                mPrefs.edit().putStringSet("cityIds", mIds).apply();
+                CityManager.removeCity(id, MainActivity.this);
             }
         });
 

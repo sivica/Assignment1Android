@@ -62,7 +62,7 @@ public class AddCitiesActivity extends AppCompatActivity {
                 if (cityWeather.getId() == null) {
                     mTextInputLayout.setError(getString(R.string.not_found));
                 } else {
-                    saveCity(cityWeather.getId());
+                    CityManager.addCity(cityWeather.getId(), AddCitiesActivity.this);
                     finish();
                 }
             }
@@ -73,15 +73,4 @@ public class AddCitiesActivity extends AppCompatActivity {
             }
         });
     }
-
-    private void saveCity(String id) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> ids = prefs.getStringSet("cityIds", null);
-        if (ids == null) {
-            ids = new HashSet<>();
-        }
-        ids.add(id);
-        prefs.edit().putStringSet("cityIds", ids).apply();
-    }
-
 }
