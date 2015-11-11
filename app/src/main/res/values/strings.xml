@@ -9,4 +9,8 @@
     <string name="temperature_label">Temperature:</string>
     <string name="humidity_label">Humidity:</string>
     <string name="description_label">Description:</string>
+    <string name="city_deleted">City deleted</string>
+    <string name="undo">UNDO</string>
+    <string name="enter_city">Please enter city name.</string>
+    <string name="not_found">City not found. Please try again.</string>
 </resources>

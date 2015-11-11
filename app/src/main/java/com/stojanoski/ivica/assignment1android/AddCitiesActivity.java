@@ -12,6 +12,9 @@ import android.text.Editable;
 import android.view.View;
 import android.widget.EditText;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
@@ -44,6 +47,10 @@ public class AddCitiesActivity extends AppCompatActivity {
     }
 
     private void getCityByName(String cityName) {
+        if (cityName.equals("")) {
+            mTextInputLayout.setError(getString(R.string.enter_city));
+            return;
+        }
         mApp = ((App)getApplication());
         mOpenWeatherApi = mApp.getOpenWeatherApi();
 
@@ -52,8 +59,12 @@ public class AddCitiesActivity extends AppCompatActivity {
                 OpenWeatherService.APPID, new Callback<GroupWeather.CityWeather>() {
             @Override
             public void success(GroupWeather.CityWeather cityWeather, Response response) {
-                saveCity(cityWeather.getId());
-                finish();
+                if (cityWeather.getId() == null) {
+                    mTextInputLayout.setError(getString(R.string.not_found));
+                } else {
+                    saveCity(cityWeather.getId());
+                    finish();
+                }
             }
 
             @Override
@@ -65,10 +76,12 @@ public class AddCitiesActivity extends AppCompatActivity {
 
     private void saveCity(String id) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String ids = prefs.getString("city_ids", "");
-
-        ids = ids + id + ",";
-        prefs.edit().putString("city_ids", ids).commit();
+        Set<String> ids = prefs.getStringSet("cityIds", null);
+        if (ids == null) {
+            ids = new HashSet<>();
+        }
+        ids.add(id);
+        prefs.edit().putStringSet("cityIds", ids).apply();
     }
 
 }

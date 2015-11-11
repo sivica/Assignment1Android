@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 
@@ -20,11 +21,12 @@ public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final LayoutInflater mInflater;
     private List<GroupWeather.CityWeather> mItems;
     private Context mContext;
+    private GroupWeather.CityWeather mDeletedCity;
 
-    public CityAdapter(Context context, List<GroupWeather.CityWeather> items) {
+    public CityAdapter(Context context) {
         mInflater = LayoutInflater.from(context);
         mContext = context;
-        mItems = items;
+        mItems = new ArrayList<>();
     }
 
     @Override
@@ -35,10 +37,12 @@ public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         final GroupWeather.CityWeather item = getItem(position);
-        ((CityHolder)holder).mCityName.setText(item.getName());
-        ((CityHolder)holder).mTemperature.setText(item.getTemp());
+        CityHolder cityHolder = (CityHolder) holder;
+        cityHolder.mCityName.setText(item.getName());
+        cityHolder.mTemperature.setText(item.getTemp());
+        cityHolder.itemView.setId(Integer.parseInt(item.getId()));
 
-        ((CityHolder)holder).itemView.setOnClickListener(new View.OnClickListener() {
+        cityHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mContext, CityInfoActivity.class);
@@ -58,13 +62,20 @@ public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     public void addItems(List<GroupWeather.CityWeather> items) {
-        mItems = items;
+        mItems.clear();
+        mItems.addAll(items);
         notifyDataSetChanged();
     }
 
     public void remove(int position) {
+        mDeletedCity = mItems.get(position);
         mItems.remove(position);
         notifyItemRemoved(position);
+    }
+
+    public void undoRemove(int position) {
+        mItems.add(position, mDeletedCity);
+        notifyDataSetChanged();
     }
 
     class CityHolder extends RecyclerView.ViewHolder {

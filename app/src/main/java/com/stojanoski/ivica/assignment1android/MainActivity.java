@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -17,6 +19,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -31,7 +34,10 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> mCities;
     private OpenWeatherService mOpenWeatherApi;
     private App mApp;
+    private SharedPreferences mPrefs;
+    private Set<String> mIds;
     private CityAdapter mCityAdapter;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     private ItemTouchHelper.SimpleCallback mItemTouchCallback = new ItemTouchHelper.SimpleCallback(0,
             ItemTouchHelper.LEFT|ItemTouchHelper.RIGHT) {
@@ -43,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-            mCityAdapter.remove(viewHolder.getAdapterPosition());
+            removeCity(viewHolder);
         }
     };
 
@@ -63,59 +69,101 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mApp = ((App)getApplication());
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         mCitiesRecyclerView = (RecyclerView) findViewById(R.id.cities_recycler_view);
         mEmptyView = (TextView) findViewById(R.id.empty_view);
 
         mLayoutManager = new LinearLayoutManager(this);
         mCitiesRecyclerView.setLayoutManager(mLayoutManager);
 
+        mCityAdapter = new CityAdapter(MainActivity.this);
+        mCitiesRecyclerView.setAdapter(mCityAdapter);
+
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mItemTouchCallback);
         itemTouchHelper.attachToRecyclerView(mCitiesRecyclerView);
+
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshCities();
+            }
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        getGroupWeather();
+        refreshCities();
     }
 
-    private void getGroupWeather() {
+    private void refreshCities() {
+        mIds = mPrefs.getStringSet("cityIds", null);
+        if (mIds == null) {
+            checkIfEmpty();
+            return;
+        }
         mOpenWeatherApi = mApp.getOpenWeatherApi();
+        String commaSeparatedIds = "";
+        for (String id : mIds) {
+            commaSeparatedIds += id + ",";
+        }
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String ids = prefs.getString("city_ids", "");
-
-        mOpenWeatherApi.groupWeatherByIds(ids, OpenWeatherService.UNITS,
+        mOpenWeatherApi.groupWeatherByIds(commaSeparatedIds, OpenWeatherService.UNITS,
                 OpenWeatherService.APPID, new Callback<GroupWeather>() {
-            @Override
-            public void success(GroupWeather groupWeather, Response response) {
-                Log.d(TAG, groupWeather.toString());
+                    @Override
+                    public void success(GroupWeather groupWeather, Response response) {
+                        mCityAdapter.addItems(groupWeather.getList());
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
 
-                mCityAdapter = new CityAdapter(MainActivity.this, groupWeather.getList());
-                mCitiesRecyclerView.setAdapter(mCityAdapter);
-                checkIfEmpty();
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                Log.e(TAG, error.getMessage());
-
-                mCityAdapter = new CityAdapter(mApp.getApplicationContext(),
-                        new ArrayList<GroupWeather.CityWeather>());
-                mCitiesRecyclerView.setAdapter(mCityAdapter);
-                checkIfEmpty();
-            }
-        });
+                    @Override
+                    public void failure(RetrofitError error) {
+                        Snackbar.make(mCitiesRecyclerView, error.getMessage(),
+                                Snackbar.LENGTH_LONG).show();
+                        checkIfEmpty();
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
+                });
     }
 
     private void checkIfEmpty() {
         if (mCityAdapter.getItemCount() == 0) {
-            mCitiesRecyclerView.setVisibility(View.GONE);
+            mSwipeRefreshLayout.setVisibility(View.GONE);
             mEmptyView.setVisibility(View.VISIBLE);
         } else {
-            mCitiesRecyclerView.setVisibility(View.VISIBLE);
+            mSwipeRefreshLayout.setVisibility(View.VISIBLE);
             mEmptyView.setVisibility(View.GONE);
         }
+    }
+
+    private void removeCity(final RecyclerView.ViewHolder viewHolder) {
+        final int position = viewHolder.getAdapterPosition();
+        final String id = String.valueOf(viewHolder.itemView.getId());
+        mCityAdapter.remove(position);
+
+        Snackbar snackbar = Snackbar
+                .make(mCitiesRecyclerView, getString(R.string.city_deleted), Snackbar.LENGTH_LONG)
+                .setAction(getString(R.string.undo), new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mCityAdapter.undoRemove(position);
+                        checkIfEmpty();
+                    }
+                });
+        snackbar.show();
+
+        snackbar.setCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar snackbar, int event) {
+                super.onDismissed(snackbar, event);
+                mIds.remove(id);
+                mPrefs.edit().putStringSet("cityIds", mIds).apply();
+            }
+        });
+
+        checkIfEmpty();
     }
 
     @Override
