@@ -3,11 +3,14 @@ package com.stojanoski.ivica.assignment1android;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.InputMismatchException;
@@ -86,6 +89,31 @@ public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             super(itemView);
             mCityName = (TextView) itemView.findViewById(R.id.textViewListCityName);
             mTemperature = (TextView) itemView.findViewById(R.id.textViewListTemperature);
+
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    PopupMenu popup = new PopupMenu(v.getContext(), v);
+                    popup.inflate(R.menu.context_recycler_view_menu);
+                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            switch (item.getItemId()) {
+                                case R.id.action_one:
+                                    Toast.makeText(mContext,"Action one selected", Toast.LENGTH_LONG).show();
+                                    return true;
+                                case R.id.action_two:
+                                    Toast.makeText(mContext,"Action two selected", Toast.LENGTH_LONG).show();
+                                    return true;
+                                default:
+                                    return false;
+                            }
+                        }
+                    });
+                    popup.show();
+                    return false;
+                }
+            });
         }
     }
 }
